@@ -1,0 +1,72 @@
+name: Module 2 Start
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+env:
+  STEP_1_FILE: ".github/steps/module-2-1-step.md"
+
+jobs:
+  start_exercise:
+    if: |
+      !github.event.repository.is_template
+    name: Start Module 2
+    permissions:
+      contents: write
+      actions: write
+      issues: write
+    uses: skills/exercise-toolkit/.github/workflows/start-exercise.yml@v0.9.3
+    with:
+      exercise-title: "Model the Decision Data and Query Scenarios"
+      intro-message: "Build a synthetic SQLite model and use SQL to compare program and event scenarios."
+      issue-title-prefix: "Exercise: Module 2 - "
+
+  post_first_step:
+    name: Post Module 2 Step 1
+    runs-on: ubuntu-latest
+    needs: [start_exercise]
+    permissions:
+      contents: read
+      actions: write
+      issues: write
+    env:
+      ISSUE_NUMBER: ${{ needs.start_exercise.outputs.issue-number }}
+      ISSUE_REPOSITORY: ${{ github.repository }}
+    steps:
+      - name: Checkout exercise
+        uses: actions/checkout@v6
+        with:
+          ref: main
+
+      - name: Get response templates
+        uses: actions/checkout@v6
+        with:
+          repository: skills/exercise-toolkit
+          path: exercise-toolkit
+          ref: v0.9.3
+
+      - name: Create comment - add first step content
+        uses: GrantBirki/comment@v2.1.1
+        with:
+          repository: ${{ env.ISSUE_REPOSITORY }}
+          issue-number: ${{ env.ISSUE_NUMBER }}
+          file: ${{ env.STEP_1_FILE }}
+          vars: |
+            login: ${{ github.actor }}
+            full_repo_name: ${{ github.repository }}
+
+      - name: Create comment - watching for progress
+        uses: GrantBirki/comment@v2.1.1
+        with:
+          repository: ${{ env.ISSUE_REPOSITORY }}
+          issue-number: ${{ env.ISSUE_NUMBER }}
+          file: exercise-toolkit/markdown-templates/step-feedback/watching-for-progress.md
+
+      - name: Disable Module 2 Start and enable first step
+        run: |
+          gh workflow disable "${{ github.workflow }}"
+          gh workflow enable "Module 2 Step 1"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

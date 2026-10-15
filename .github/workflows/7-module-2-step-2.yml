@@ -1,0 +1,159 @@
+name: Module 2 Step 2
+
+on:
+  push:
+    branches-ignore:
+      - main
+    paths:
+      - "sql/schema.sql"
+      - "sql/seed.sql"
+  workflow_dispatch:
+
+permissions: {}
+
+env:
+  STEP_3_FILE: ".github/steps/module-2-3-step.md"
+
+jobs:
+  find_exercise:
+    name: Find Module 2 Exercise Issue
+    permissions:
+      issues: read
+    uses: skills/exercise-toolkit/.github/workflows/find-exercise-issue.yml@v0.9.3
+    with:
+      issue-title-text: "Exercise: Module 2 - Model the Decision Data and Query Scenarios"
+
+  check_step_work:
+    name: Check synthetic fixture
+    runs-on: ubuntu-latest
+    needs: [find_exercise]
+    permissions:
+      contents: read
+      issues: write
+    env:
+      ISSUE_REPOSITORY: ${{ github.repository }}
+      ISSUE_NUMBER: ${{ needs.find_exercise.outputs.issue-number }}
+    steps:
+      - name: Checkout trusted validator
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Checkout learner SQL
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          path: learner
+
+      - name: Get response templates
+        uses: actions/checkout@v6
+        with:
+          repository: skills/exercise-toolkit
+          path: exercise-toolkit
+          ref: v0.9.3
+
+      - name: Find existing step feedback
+        id: find-existing-feedback
+        uses: peter-evans/find-comment@v4
+        with:
+          repository: ${{ env.ISSUE_REPOSITORY }}
+          issue-number: ${{ env.ISSUE_NUMBER }}
+          comment-author: "github-actions[bot]"
+          body-includes: "<!-- exercise-feedback:module-2-step-2 -->"
+          direction: last
+
+      - name: Find initial progress comment
+        id: find-initial-feedback
+        if: steps.find-existing-feedback.outputs.comment-id == ''
+        uses: peter-evans/find-comment@v4
+        with:
+          repository: ${{ env.ISSUE_REPOSITORY }}
+          issue-number: ${{ env.ISSUE_NUMBER }}
+          comment-author: "github-actions[bot]"
+          body-includes: "watch your progress in the background"
+          direction: last
+
+      - name: Update comment - checking work
+        uses: GrantBirki/comment@v2.1.1
+        with:
+          repository: ${{ env.ISSUE_REPOSITORY }}
+          issue-number: ${{ env.ISSUE_NUMBER }}
+          comment-id: ${{ steps.find-existing-feedback.outputs.comment-id || steps.find-initial-feedback.outputs.comment-id }}
+          file: exercise-toolkit/markdown-templates/step-feedback/checking-work.md
+          edit-mode: replace
+
+      - name: Check synthetic fixture
+        id: check-seed
+        continue-on-error: true
+        run: python3 scripts/check_sql_exercise.py --step 2 --root learner
+
+      - name: Update comment - step results
+        if: always()
+        uses: GrantBirki/comment@v2.1.1
+        with:
+          repository: ${{ env.ISSUE_REPOSITORY }}
+          issue-number: ${{ env.ISSUE_NUMBER }}
+          comment-id: ${{ steps.find-existing-feedback.outputs.comment-id || steps.find-initial-feedback.outputs.comment-id }}
+          edit-mode: replace
+          file: exercise-toolkit/markdown-templates/step-feedback/step-results-table.md
+          vars: |
+            step_number: 2
+            results_table:
+              - description: "Synthetic fixture has the expected row counts, valid references, valid scores, and venue-capacity fit <!-- exercise-feedback:module-2-step-2 -->"
+                passed: ${{ steps.check-seed.outcome == 'success' }}
+
+      - name: Fail job if not all checks passed
+        if: contains(steps.*.outcome, 'failure')
+        run: exit 1
+
+  post_next_step_content:
+    name: Post next step content
+    needs: [find_exercise, check_step_work]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+      issues: write
+    env:
+      ISSUE_REPOSITORY: ${{ github.repository }}
+      ISSUE_NUMBER: ${{ needs.find_exercise.outputs.issue-number }}
+    steps:
+      - name: Checkout exercise
+        uses: actions/checkout@v6
+
+      - name: Get response templates
+        uses: actions/checkout@v6
+        with:
+          repository: skills/exercise-toolkit
+          path: exercise-toolkit
+          ref: v0.9.3
+
+      - name: Create comment - step finished
+        uses: GrantBirki/comment@v2.1.1
+        with:
+          repository: ${{ env.ISSUE_REPOSITORY }}
+          issue-number: ${{ env.ISSUE_NUMBER }}
+          file: exercise-toolkit/markdown-templates/step-feedback/step-finished-prepare-next-step.md
+          vars: |
+            next_step_number: 3
+
+      - name: Create comment - add step content
+        uses: GrantBirki/comment@v2.1.1
+        with:
+          repository: ${{ env.ISSUE_REPOSITORY }}
+          issue-number: ${{ env.ISSUE_NUMBER }}
+          file: ${{ env.STEP_3_FILE }}
+
+      - name: Create comment - watching for progress
+        uses: GrantBirki/comment@v2.1.1
+        with:
+          repository: ${{ env.ISSUE_REPOSITORY }}
+          issue-number: ${{ env.ISSUE_NUMBER }}
+          file: exercise-toolkit/markdown-templates/step-feedback/watching-for-progress.md
+
+      - name: Disable current workflow and enable next one
+        run: |
+          gh workflow disable "${{ github.workflow }}"
+          gh workflow enable "Module 2 Step 3"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

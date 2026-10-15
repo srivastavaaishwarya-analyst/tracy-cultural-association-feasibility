@@ -1,0 +1,32 @@
+-- Insert the fixed synthetic fixture described in README.md and the Module 2 lessons.
+-- Expected rows: 5 surveys, 4 programs, 10 preferences, 3 venues, 5 events,
+-- 5 attendance rows, and 10 estimated-expense rows.
+--
+-- Use these exact fictional records so everyone can compare query outputs:
+-- surveys (survey_id, scenario_date, source_label):
+--   S001..S005, 2030-01-01, synthetic
+-- programs (program_id, program_name, program_category):
+--   P1, Cultural learning, education
+--   P2, Celebration gathering, celebration
+--   P3, Community gathering, community
+--   P4, Family workshop, education
+-- preferences (survey_id, program_id, interest_score):
+--   S001/P1/4, S002/P1/4, S003/P1/4
+--   S001/P2/5, S002/P2/4, S003/P2/4
+--   S004/P3/5, S005/P3/4, S004/P4/5, S005/P4/4
+-- venues (venue_id, venue_label, capacity):
+--   V1, Venue A, 50; V2, Venue B, 40; V3, Venue C, 25
+-- events (event_id, program_id, venue_id, scenario_date):
+--   E001/P1/V1/2030-02-01, E002/P2/V2/2030-02-08
+--   E003/P3/V1/2030-02-15, E004/P1/V3/2030-02-22
+--   E005/P4/V2/2030-03-01
+-- attendance (event_id, scenario_registered_count, scenario_attended_count):
+--   E001/35/30, E002/45/40, E003/30/25, E004/25/20, E005/20/15
+-- expenses (expense_id, event_id, expense_category, estimated_amount_usd):
+--   X001/E001/venue/300, X002/E001/supplies/200
+--   X003/E002/venue/500, X004/E002/supplies/300
+--   X005/E003/venue/250, X006/E003/supplies/150
+--   X007/E004/venue/200, X008/E004/supplies/150
+--   X009/E005/venue/180, X010/E005/supplies/120
+
+-- TODO: Insert synthetic rows in parent-before-child order.

@@ -1,0 +1,53 @@
+name: Module 1 Recovery
+
+on:
+  issues:
+    types:
+      - opened
+
+permissions: {}
+
+jobs:
+  recover_exercise:
+    if: |
+      !github.event.repository.is_template &&
+      github.event.issue.title == 'Exercise recovery: Frame the Feasibility Decision'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+      issues: write
+    steps:
+      - name: Checkout exercise
+        uses: actions/checkout@v6
+        with:
+          ref: main
+
+      - name: Get response templates
+        uses: actions/checkout@v6
+        with:
+          repository: skills/exercise-toolkit
+          path: exercise-toolkit
+          ref: v0.9.3
+
+      - name: Create comment - add first step content
+        uses: GrantBirki/comment@v2.1.1
+        with:
+          repository: ${{ github.repository }}
+          issue-number: ${{ github.event.issue.number }}
+          file: .github/steps/1-step.md
+          vars: |
+            login: ${{ github.actor }}
+            full_repo_name: ${{ github.repository }}
+
+      - name: Create comment - watching for progress
+        uses: GrantBirki/comment@v2.1.1
+        with:
+          repository: ${{ github.repository }}
+          issue-number: ${{ github.event.issue.number }}
+          file: exercise-toolkit/markdown-templates/step-feedback/watching-for-progress.md
+
+      - name: Enable first step workflow
+        run: gh workflow enable "Step 1"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

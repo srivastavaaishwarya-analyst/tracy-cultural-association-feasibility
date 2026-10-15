@@ -1,0 +1,26 @@
+name: "Exercise recovery: Start Module 1"
+description: Start or recover the guided BRD exercise if the automatic lesson issue was not created.
+title: "Exercise recovery: Frame the Feasibility Decision"
+labels:
+  - learning-exercise
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form only if the `Step 0` workflow did not create your exercise issue. Do not include personal or sensitive information.
+  - type: textarea
+    id: goal
+    attributes:
+      label: What decision will your BRD support?
+      description: State it as a hypothetical choice; do not make unsupported claims about Tracy residents.
+      placeholder: "Example: decide whether to pilot a small set of programs under clearly stated hypothetical assumptions."
+    validations:
+      required: true
+  - type: textarea
+    id: blocker
+    attributes:
+      label: Where are you stuck?
+      description: Include the lesson number and a short description. Never paste secrets or personal data.
+      placeholder: "Step number and what you tried"
+    validations:
+      required: true
